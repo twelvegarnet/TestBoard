@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="web.dao.BoardDao">
+
+	<select id="selectCntAll" parameterType="web.util.Paging" resultType="int">
+		SELECT count(*) FROM board
+		WHERE 1=1
+		<if test="!search.equals('')">
+			AND delete_status = 'N'
+			<if test="category.equals('mix')">
+				AND (REGEXP_LIKE ( board_title, #{search} ) OR REGEXP_LIKE ( board_content, #{search} ))
+			</if>
+			<if test="category.equals('title')">
+				AND REGEXP_LIKE ( board_title, #{search} )
+			</if>
+			<if test="category.equals('content')">
+				AND REGEXP_LIKE ( board_content, #{search} )
+			</if>
+			<if test="category.equals('nick')">
+				AND REGEXP_LIKE ( board_nick, #{search} )
+			</if>
+		</if>
+	</select>
+	
+	<select id="selectAll" parameterType="web.util.Paging" resultType="Board">
+		SELECT * FROM (
+			SELECT BBB.* FROM (
+				SELECT rownum, BB.* FROM (
+					SELECT rownum rnum, B.* FROM (
+						SELECT 
+							board.*
+							, ( SELECT count(*) FROM comments WHERE comments.board_no = board.board_no) as countCmt 
+						FROM board
+						WHERE 1=1
+						<if test="!search.equals('')">
+							AND delete_status = 'N'
+							<if test="category.equals('mix')">
+								AND (REGEXP_LIKE ( board_title, #{search} ) OR REGEXP_LIKE ( board_content, #{search} ))
+							</if>
+							<if test="category.equals('title')">
+								AND REGEXP_LIKE ( board_title, #{search} )
+							</if>
+							<if test="category.equals('content')">
+								AND REGEXP_LIKE ( board_content, #{search} )
+							</if>
+							<if test="category.equals('nick')">
+								AND REGEXP_LIKE ( board_nick, #{search} )
+							</if>
+						</if>
+						ORDER BY group_no DESC, order_no ASC, board_no DESC
+					)B
+					ORDER BY rnum DESC
+				)BB
+			)BBB
+			ORDER BY rnum ASC
+		)
+		WHERE rnum BETWEEN #{startNo} AND #{endNo}
+	</select>
+	
+	<select id="selectAllversion2" parameterType="web.util.Paging" resultType="Board">
+		SELECT * FROM (
+		    SELECT rownum, BB.* FROM (
+		        SELECT * FROM (
+		            SELECT rownum rnum, B.* FROM (
+		                SELECT 
+		                	board.*
+		                	, ( SELECT count(*) FROM comments WHERE comments.board_no = board.board_no) as countCmt
+		                	, ( SELECT count(*) FROM boardfile WHERE boardfile.board_no = board.board_no) as countFile
+		                FROM board
+		                WHERE 1=1
+						<if test="!search.equals('')">
+							AND delete_status = 'N'
+							<if test="category.equals('mix')">
+								AND (REGEXP_LIKE ( board_title, #{search} ) OR REGEXP_LIKE ( board_content, #{search} ))
+							</if>
+							<if test="category.equals('title')">
+								AND REGEXP_LIKE ( board_title, #{search} )
+							</if>
+							<if test="category.equals('content')">
+								AND REGEXP_LIKE ( board_content, #{search} )
+							</if>
+							<if test="category.equals('nick')">
+								AND REGEXP_LIKE ( board_nick, #{search} )
+							</if>
+						</if>
+		                ORDER BY group_no DESC, order_no ASC
+		            )B
+		        )
+		        <if test="search.equals('')">
+		        	ORDER BY layer_no ASC, board_no ASC
+				</if>
+		        <if test="!search.equals('')">
+		        	ORDER BY rnum DESC
+				</if>
+		    )BB
+		    ORDER BY rnum ASC
+		)WHERE rnum BETWEEN #{startNo} AND #{endNo}
+	</select>
+	
+	<select id="selectBoardByBoardNo" parameterType="Board" resultType="Board">
+		SELECT * FROM board
+		WHERE board_no = #{boardNo}
+	</select>
+	
+	<update id="updateHit" parameterType="Board">
+		UPDATE board
+		SET hit = hit + 1
+		WHERE board_no = #{boardNo}
+	</update>
+	
+	<select id="selectFilesByBoardNo" parameterType="Board" resultType="BoardFile">
+		SELECT * FROM boardfile
+		WHERE board_no = #{boardNo}
+		ORDER BY bf_no ASC
+	</select>
+	
+	<select id="selectAllCmt" parameterType="Board" resultType="Comments">
+		SELECT * FROM comments
+		WHERE board_no = #{boardNo}
+		ORDER BY c_no DESC
+	</select>
+	
+	<select id="selectByFileno" parameterType="BoardFile" resultType="BoardFile">
+		SELECT * FROM boardfile
+		WHERE bf_no = #{bfNo}
+	</select>
+	
+	<insert id="insertCmt" parameterType="Comments">
+		<selectKey keyProperty="cNo" resultType="int" order="BEFORE">
+			SELECT comments_seq.nextval FROM dual
+		</selectKey>
+		
+		INSERT INTO comments ( c_no, board_no, c_nick, c_pw, c_comment )
+		VALUES ( #{cNo}, #{boardNo}, #{cNick}, #{cPw}, #{cComment} )
+	</insert>
+	
+	<select id="selectAllCmtAfterInsert" parameterType="Comments" resultType="Comments">
+		SELECT * FROM comments
+		WHERE board_no = #{boardNo}
+		ORDER BY c_no DESC
+	</select>
+	
+	<select id="selectAllCmtList" parameterType="Comments" resultType="Comments">
+		SELECT * FROM comments
+		WHERE board_no = #{boardNo}
+		ORDER BY c_no DESC
+	</select>
+	
+	<update id="updateCmt" parameterType="Comments">
+		UPDATE comments
+		SET c_comment = #{cComment}
+		WHERE c_no = #{cNo}
+	</update>
+	
+	<delete id="deleteCmt" parameterType="Comments">
+		DELETE FROM comments
+		WHERE c_no = #{cNo}
+	</delete>
+	
+	<update id="updateOrderNo" parameterType="Board">
+		UPDATE board
+		SET order_no = order_no + 1
+		WHERE group_no = ( SELECT group_no FROM board WHERE board_no = #{parentNo} ) 
+		AND order_no > ( SELECT order_no FROM board WHERE board_no = #{parentNo} )
+	</update>
+	
+	<insert id="writeBoard" parameterType="Board">
+		<selectKey order="BEFORE" resultType="int" keyProperty="boardNo">
+			SELECT board_seq.nextval FROM dual
+		</selectKey>
+		
+		INSERT INTO board(board_no, board_nick, board_pw, board_title, board_content, group_no
+			<if test="parentNo!=0">
+				, layer_no
+				, order_no
+				, parent_no
+			</if>
+		)
+		VALUES ( #{boardNo}, #{boardNick}, #{boardPw}, #{boardTitle}, #{boardContent},
+		<choose>
+			<when test="parentNo!=0">
+				( SELECT group_no FROM board WHERE board_no = #{parentNo} )
+				, ( SELECT layer_no FROM board WHERE board_no = #{parentNo} ) + 1
+				, ( SELECT order_no FROM board WHERE board_no = #{parentNo} ) + 1
+				, #{parentNo}
+			</when>
+			<otherwise>
+				#{boardNo}
+			</otherwise>
+		</choose>
+		)
+	</insert>
+	
+	<insert id="insertBoardFiles" parameterType="BoardFile">
+		INSERT INTO boardfile(bf_no, board_no, bf_origin_name, bf_stored_name, bf_size, bf_content_type)
+		VALUES (boardfile_seq.nextval, #{boardNo}, #{bfOriginName}, #{bfStoredName}, #{bfSize}, #{bfContentType} )
+	</insert>
+	
+	<delete id="deleteOldFile" parameterType="int">
+		DELETE FROM boardfile
+		WHERE bf_no = #{bfNo}
+	</delete>
+	
+	<update id="updateBoard" parameterType="Board">
+		UPDATE board
+		SET board_title = #{boardTitle}, board_content = #{boardContent}
+		WHERE board_no = #{boardNo}
+	</update>
+	
+	<select id="countReply" parameterType="Board" resultType="int">
+		SELECT count(*) FROM board
+		WHERE parent_no = #{boardNo}
+	</select>
+	
+	<delete id="deleteCmts" parameterType="Board">
+		DELETE FROM comments
+		WHERE board_no = #{boardNo}
+	</delete>
+	
+	<delete id="deleteFiles" parameterType="Board">
+		DELETE FROM boardFile
+		WHERE board_no = #{boardNo}
+	</delete>
+	
+	<delete id="deleteBoard" parameterType="Board">
+		DELETE FROM board
+		WHERE board_no = #{boardNo}
+	</delete>
+	
+	<update id="updateBoardForDelete" parameterType="Board">
+		UPDATE board
+		SET board_title = '' AND board_content = '' AND delete_status = 'Y'
+		WHERE board_no = #{boardNo}
+	</update>
+	
+	<select id="selectAllForExcel" resultType="Board">
+		SELECT rownum, board_title, board_content, board_nick, create_date, hit FROM (
+		    SELECT rownum rnum, BB.* FROM (
+		        SELECT BOARD.* FROM (
+		            SELECT rownum, B.* FROM (
+		                SELECT 
+		                    board.*
+		                    , ( SELECT count(*) FROM comments WHERE comments.board_no = board.board_no) as countCmt 
+		                FROM board
+		                ORDER BY board_no ASC
+		            )B
+		            ORDER BY rownum DESC
+		        )BOARD
+		        ORDER BY group_no DESC, order_no ASC
+		    )BB
+		)
+	</select>
+	
+</mapper>
