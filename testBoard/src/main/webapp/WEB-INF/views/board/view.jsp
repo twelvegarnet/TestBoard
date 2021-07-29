@@ -494,8 +494,11 @@ function updateCmt(c_no, cPw){
 				
 			}
 		})
+	} else if (pwchk == null){
+
 	} else {
 		alert("정확한 비밀번호를 입력해주세요.");
+		updateCmt(c_no, cPw);
 	}
 }
 
@@ -517,8 +520,11 @@ function deleteCmt(c_no, cPw){
 				
 			}
 		})
+	} else if(pwChk == null){
+		
 	} else {
 		alert("정확한 비밀번호를 입력해주세요.");
+		deleteCmt(c_no, cPw);
 	}
 }
 

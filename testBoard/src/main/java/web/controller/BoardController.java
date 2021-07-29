@@ -125,10 +125,12 @@ public class BoardController {
 	}
 	
 	@RequestMapping(value="/write", method=RequestMethod.GET)
-	public void writeForm(Board board, Model model) {
+	public String writeForm(Board board, Model model) {
 //		logger.info("/board/write [GET] 요청 완료");
 		logger.info("writeForm [GET] board 데이터 확인 : {}", board);
 		model.addAttribute("board", board);
+		
+		return "board/write2";
 	}
 	
 	@RequestMapping(value="/write", method=RequestMethod.POST)
@@ -136,19 +138,21 @@ public class BoardController {
 //		logger.info("write [POST] board 데이터 확인 : {}", board);
 		List<MultipartFile> fileList = mtfRequest.getFiles("file");
 		logger.info("작성시 첨부한 점부파일 데이터 확인 : {}", fileList);
-		boardService.write(board, fileList);
+//		boardService.write(board, fileList);
 		
 		return "redirect:/board/list";
 	}
 	
 	
 	@RequestMapping(value="/update", method=RequestMethod.GET)
-	public void updateForm(Board board, Model model) {
+	public String updateForm(Board board, Model model) {
 		Board b = boardService.getBoard(board);
 		List<BoardFile> flist = boardService.getFiles(board);
 
 		model.addAttribute("board", b);
 		model.addAttribute("file", flist);
+		
+		return "board/update2";
 	}
 	
 	@RequestMapping(value="/update", method=RequestMethod.POST)
