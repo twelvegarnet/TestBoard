@@ -142,7 +142,7 @@ public class BoardController {
 //		logger.info("write [POST] board 데이터 확인 : {}", board);
 		List<MultipartFile> fileList = mtfRequest.getFiles("file");
 		logger.info("작성시 첨부한 점부파일 데이터 확인 : {}", fileList);
-//		boardService.write(board, fileList);
+		boardService.write(board, fileList);
 		
 		return "redirect:/board/list";
 	}

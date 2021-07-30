@@ -7,45 +7,48 @@
 
 <div class="content">
 	
-	<div id="head" style="font-size: 20pt;">게시글 수정</div>
+	<c:if test="${orderNo eq 1}">
+		<div id="head" style="font-size: 20pt;">본문 - 답글 쓰기</div>
+	</c:if>
+	<c:if test="${groupNo gt 1}">
+		<div id="head" style="font-size: 20pt;">답글 - 답글 쓰기</div>
+	</c:if>
 	<hr>
-	<form action="/board/update" method="POST" enctype="multipart/form-data">
-		<input type="hidden" name="boardNo" value="${board.boardNo }" />
-		
+	<form action="/board/reply" method="POST" enctype="multipart/form-data">
 		<div id="title">
 			<label style="width: 32px;">제목</label>
-			<input type="text" id="boardTitle" name="boardTitle" value="<c:out value="${board.boardTitle}" escapeXml="true" />"
-			style="width: 70%; margin: 0px 0px 10px 48px;" maxlength="50" required onblur="titleChk()" /></div>
+			<input type="text" id="boardTitle" name="boardTitle" placeholder="제목을 입력해주세요."
+			style="width: 60%; margin: 0px 0px 10px 48px;" maxlength="50" required onblur="titleChk()"/>
+			<label style="">제목은 50자까지 입력가능합니다.</label>
+		</div>
 		<div id="nickname" style="margin-bottom: 10px; text-align: left;">
 			<label>닉네임</label>
-			<input type="text" id="boardNick" name="boardNick" style="width: 30%; margin-left: 32px;" value=${board.boardNick } onblur="nickChk()" onkeyup="nickSpaceChk(this)" maxlength="20" required />
-			<label id="boardNickStandard">닉네임는 한글 1~10자 혹은 영어 2~20자 로 구성되어야 합니다. (숫자 사용 가능)</label>
-			<label id="boardNickWarn" class="nodisplay" style="color: red;">한글 1~10자, 영문 2~20자, 숫자만 사용 가능합니다. (혼용가능)</label>
+			<input type="text" id="boardNick" name="boardNick" style="width: 30%; margin-left: 32px;" placeholder="닉네임" onblur="nickChk()" onkeyup="nickSpaceChk(this)" maxlength="20" required />
+			<label id="boardNickStandard">닉네임는 한글 1~10자 혹은 영어, 숫자 2~20자 로 구성되어야 합니다.</label>
+			<label id="boardNickWarn" class="nodisplay" style="color: red;">한글 1~10자, 영문, 숫자 2~20자만 사용 가능합니다. (혼용가능)</label>
 			<label id="boardNickOk" class="nodisplay" style="color: green;">올바른 형식입니다.</label>
 		</div>
 		<div id="password" style="margin-bottom: 10px; text-align: left;">
 			<label>비밀번호</label>
-			<input type="password" id="boardPw" name="boardPw" style="width: 30%; margin-left: 1.6%;" value="${board.boardPw }" onblur="passChk()" onkeyup="pwSpaceChk(this)" maxlength="10" required />
+			<input type="password" id="boardPw" name="boardPw" style="width: 30%; margin-left: 1.6%;" onblur="passChk()" onkeyup="pwSpaceChk(this)" maxlength="10" placeholder="비밀번호" required />
 			<i class="fas fa-eye" style="cursor: pointer;"></i>
-						<label id="boardPwStandard">비밀번호는 6 ~ 10자 사이의 영어/숫자/특수문자로 구성되어야 합니다.</label>
+			<label id="boardPwStandard">비밀번호는 6 ~ 10자 사이의 영어/숫자/특수문자로 구성되어야 합니다.</label>
 			<label id="boardPwWarn" class="nodisplay" style="color: red;">비밀번호는 6 ~ 10자 사이의 영어/숫자/특수문자로 구성되어야 합니다.</label>
 			<label id="boardPwOk" class="nodisplay" style="color: green;">올바른 형식입니다.</label>
 		</div>
-		<div id="boardContent">
-			<textarea id="updateContent" name="boardContent" style="width: 100%; height: 400px; resize: none;
-			margin-bottom: 10px;" maxlength="4000"  onkeyup="countText()" required><c:out value="${board.boardContent}" escapeXml="true" /></textarea>
-			<label id="nowStr"></label>/<label id="limitStr"></label>
+		<div id="content">
+			<textarea id="boardContent" name="boardContent" placeholder="내용을 입력하세요." 
+			style="width: 100%; height: 400px; resize: none; margin-bottom: 10px;" maxlength="4000" onkeyup="countText()" required></textarea>
+			<label id="nowStr">0</label>/<label id="limitStr"></label>
 		</div><br>
+		<input type="hidden" name="groupNo" value="${groupNo }" />
 		<div id="fileUploadBtn">
 			<input type="button" value="+" onclick="plusInput()" style="margin-bottom: 10px;" />&nbsp;첨부파일 추가
 		</div>
-		<div id="deleteFileList"></div>
 		<br>
 		<label>※ 이미지 파일( .gif, .jpg, .png, .jpeg )만 업로드 가능합니다.</label><br>
 		<label>※ 이미지 업로드는 최대 3MB * 15 개까지 가능합니다.</label>
-		<div id="image_container" style="text-align: left;">
-			<c:forEach var="f" items="${file }" varStatus="status" begin="0" step="1"><img src="/resources/${f.bfStoredName }" id="img${f.bfNo }" name="img" style="width: 260px; height: 170px; margin: 10px;"><input type="button" id="deleteBtn${f.bfNo }" onclick="deleteOldImg(${f.bfNo})" value="삭제" style="position: relative; top: -15px; left: -52px; cursor: pointer;"></c:forEach>
-		</div>
+		<div id="image_container" style="text-align: left;"></div>
 		<div id="btnBox" style="text-align: center;">
 			<input type="button" value="완료" onclick="submitBtn()" />
 			<input type="button" value="취소" onclick="history.go(-1)" />
@@ -53,6 +56,8 @@
 	</form>
 
 </div> <%-- content end --%>
+
+<c:import url="/WEB-INF/views/layout/footer.jsp" />
 
 <script type="text/javascript">
 $(document).ready(function(){
@@ -66,19 +71,11 @@ $(document).ready(function(){
             .prev('#boardPw').attr('type','password');
         }
     });
-	
 });
 
 
-
-let textareaLimit = $('textarea').attr('maxlength')*1;
+const textareaLimit = $('textarea').attr('maxlength')*1;
 $("#limitStr").text(textareaLimit);
-let updex = /\s/ig;
-let originText = $('textarea').val();
-let originLength = originText.toString().replace(updex, "").length;
-$("#nowStr").text(originLength);
-
-
 
 /* 첨부파일에 필요한 데이터를 담기 위한 각 div와 내부 태그들의 id에 부여할 넘버링 */
 let fileupBtnNo = 1;
@@ -138,7 +135,7 @@ function plusInput(){
 
 
 /* 해당 작성글의 총 첨부파일 수 */
-let totalFileAmount = $("img[name=img]").length;
+let totalFileAmount = 0;
 
 /* 첨부파일 1개당 사이즈 제한 = 3MB */
 const fileLimitSize = 3145728;
@@ -223,6 +220,9 @@ function chkUploadFile(event, btnNo){
 
 
 
+
+
+
 /* 버튼에 해당하는 첨부파일 삭제 */
 function deleteInputBtn(btnNo){
 	
@@ -236,32 +236,6 @@ function deleteInputBtn(btnNo){
 	/* 첨부파일에 대한 모든 데이터 삭제를 위해 정보를 담고있는 div 태그 삭제 */
 	inputArea.remove();
 }
-
-
-
-function deleteOldImg(bfNo){
-	/* 화면상의 이미지 개수 확인 */
-	let fileCount = $("img[name=img]").length;
-	
-	/* 삭제 버튼 : 이미지 삭제 및 삭제버튼 삭제 */
-	$("#img"+bfNo).remove();
-	$("#deleteBtn"+bfNo).remove();
-	
-	/* 삭제된 파일을 DB에서도 삭제하기 위해 얻어온 bfNo를 <select> 태그로 전달한다. */
-	var oldFileCheckbox = document.createElement("input");
-	oldFileCheckbox.setAttribute("type", "checkbox");
-	oldFileCheckbox.setAttribute("id", "oldFile"+bfNo);
-	oldFileCheckbox.setAttribute("name", "oldFile");
-	oldFileCheckbox.setAttribute("style", "display: none;");
-	oldFileCheckbox.setAttribute("value", bfNo);
-	oldFileCheckbox.setAttribute("checked", "checked");
-	
-	document.querySelector("#deleteFileList").appendChild(oldFileCheckbox);
-	
-	/* 기존의 첨부파일을 삭제시 총 첨부파일의 수가 차감된다 */
-	totalFileAmount -= 1;
-}
-
 
 
 
@@ -545,6 +519,7 @@ function submitBtn(){
 		
 		if(newTitle == ""){
 			alert("제목을 입력해주세요");
+			$("#boardTitle").focus();
 			return false;
 		}
 	}
@@ -584,7 +559,7 @@ function submitBtn(){
 		return false;
 	}
 	
-	const contentValue = $("#updateContent").val();
+	const contentValue = $("#boardContent").val();
 	const contentLength = contentValue.length;
 	const contentRedex =  /\s/ig;
 	
@@ -593,15 +568,14 @@ function submitBtn(){
 		
 		if(newContent == ""){
 		alert("내용을 입력해주세요.");
-		$("#updateContent").focus();
+		$("#boardContent").focus();
 		
 		return false;
 		}
 	}
-	
 
 	$('form').submit();
 }
 </script>
 
-<c:import url="/WEB-INF/views/layout/footer.jsp" />
+
