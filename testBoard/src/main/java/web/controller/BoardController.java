@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -32,6 +33,9 @@ public class BoardController {
 	
 	@Autowired
 	BoardService boardService;
+	
+	@Autowired 
+	ServletContext servletContext;
 	
 	@RequestMapping(value="/list")
 	public void list(

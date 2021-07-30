@@ -43,8 +43,8 @@
 	<beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
 		<!-- 메모리에서 파일을 처리하는 최대 사이즈 제한 : 1MB -->
 		<beans:property name="maxInMemorySize" value="1048576"/>
-		<!-- 메모리에서 파일을 처리하는 최대 사이즈 제한 : 10MB -->
-		<beans:property name="maxUploadSize" value="10485760"/>
+		<!-- 메모리에서 파일을 처리하는 최대 사이즈 제한 : 45MB -->
+		<beans:property name="maxUploadSize" value="47185920"/>
 		<!-- 업로드된 파일 당 최대 사이즈 : 3MB -->
 		<beans:property name="maxUploadSizePerFile" value="3145728"/>
 	</beans:bean>

@@ -83,7 +83,6 @@ const textareaLimit = $('textarea').attr('maxlength')*1;
 $("#limitStr").text(textareaLimit);
 
 
-
 /* 첨부파일에 필요한 데이터를 담기 위한 각 div와 내부 태그들의 id에 부여할 넘버링 */
 let fileupBtnNo = 1;
 
@@ -116,12 +115,18 @@ function plusInput(){
 	eachFileCount.setAttribute("id", "eachFileCount"+fileupBtnNo);
 	eachFileCount.setAttribute("value", "0");
 	
+	/* 첨부된 파일의 이름을 표시할 div 생성 */
+	const attachedFileName = document.createElement("div");
+	attachedFileName.setAttribute("id", "attachedFileName"+fileupBtnNo);
+	attachedFileName.setAttribute("style", "margin-left: 30px; display: inline-block;");
+	
 	/* plusInput()에서 생성된 inputArea를 담을 위치 */
 	const fileUpArea = document.querySelector("#fileUploadBtn");
 	
 	/* 생성된 div에 다중파일첨부 input 버튼과 input 삭제버튼 삽입 */
 	inputArea.append(input);
 	inputArea.append(cancel);
+	inputArea.append(attachedFileName);
 	inputArea.append(eachFileCount);
 	
 	/* 생성된 div를 기존의 div에 삽입 */
@@ -141,9 +146,10 @@ let totalFileAmount = 0;
 /* 첨부파일 1개당 사이즈 제한 = 3MB */
 const fileLimitSize = 3145728;
 
-
 /* 첨부파일이 이미지 파일인지 체크 */
 function chkUploadFile(event, btnNo){
+	
+	/* -------------------------------- 검사 항목 ------------------------------- */
 	
 	/* 해당 첨부파일 버튼이 기존에 갖고있던 첨부파일의 수 */
 	const originFileCount = $("#eachFileCount"+btnNo).val();
@@ -151,15 +157,18 @@ function chkUploadFile(event, btnNo){
 	/* 현재 input type="file"에 담겨있는 첨부파일의 수 */
 	const nowFileCount = event.target.files.length;
 	
-	/* 기존에 첨부했던 버튼에 재첨부 시 기존의 첨부파일이 있다면 차감시킨다 */
-	if(originFileCount != 0){
-	 	totalFileAmount -= originFileCount;
+	/* 현재 첨부한 파일과 기존에 첨부됐던 파일의 합이 15를 넘는다면  */
+	/* 현재 첨부한 파일을 reject한다 */
+	if(totalFileAmount-originFileCount+nowFileCount > 15){
+		alert("첨부파일은 최대 15개입니다.");
+		$("#fileUploadBtn"+btnNo).val("");
+		return false;
 	}
 
 	/* 첨부파일 타입에 'image'가 들어가는지 체크 */
 	const imgChk = /image/;
 
-	/* 모든 첨부파일이 이미지인지 하나씩 돌려서 체크 */
+	/* 모든 첨부파일의 파일 형식, 파일크기 체크 */
 	for(var image of event.target.files){
 		
 		/* n번째 첨부파일이 이미지인지 체크 */
@@ -168,6 +177,24 @@ function chkUploadFile(event, btnNo){
 			$("#fileUploadBtn"+btnNo).val("");
 			return false;
 		}
+		
+		/* n번째 첨부파일의 크기가 제한 이내인지 체크 */
+		if(image.size > fileLimitSize){
+			alert("3MB 이내의 이미지 파일만 첨부 가능합니다.");
+			$("#fileUploadBtn"+btnNo).val("");
+			return false;
+		}
+	}
+
+	/* ------------------------------------------------------------------------- */
+	
+	
+	
+	/* -------------------------------- 실행 항목 ------------------------------- */
+	
+	/* 기존에 첨부했던 버튼에 재첨부 시 기존의 첨부파일이 있다면 차감시킨다 */
+	if(originFileCount != 0){
+	 	totalFileAmount -= originFileCount;
 	}
 	
 	/* 첨부된 파일의 개수만큼 해당 input 버튼의 첨부파일 수 증가시키기 */
@@ -175,6 +202,26 @@ function chkUploadFile(event, btnNo){
 	
 	/* 첨부된 파일 개수만큼 총 첨부파일 수 증가시키기 */
 	totalFileAmount += nowFileCount;
+	
+	/* 현재 첨부한 전체 첨부파일의 이름 표시하기 */
+	let attachedFileList = $("#attachedFileName"+btnNo).val();
+	
+	for(var image of event.target.files){
+		attachedFileList += ("   "+image.name+"    ,");
+	}
+	
+	/* 파일 이름 리스트 마지막의 "," 제거 */
+	
+		/* 파일 이름 리스트의 전체 길이 */
+		let attachedFileListLength = attachedFileList.length;
+		
+		/* 파일 이름 리스트의 마지막 글자 자르기 */
+		attachedFileList = attachedFileList.substring(0, attachedFileListLength-1);
+		
+	/* 파일 이름 리스트 화면에 출력 */
+	$("#attachedFileName"+btnNo).text(attachedFileList);
+	
+	/* ------------------------------------------------------------------------- */
 }
 
 
