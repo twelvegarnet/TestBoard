@@ -221,11 +221,37 @@ function chkUploadFile(event, btnNo){
 	/* 파일 이름 리스트 화면에 출력 */
 	$("#attachedFileName"+btnNo).text(attachedFileList);
 	
+	/* 첨부파일의 섬네일 출력하기 */
+	setThumbnail(event, btnNo);
+	
 	/* ------------------------------------------------------------------------- */
 }
 
 
 
+/* 해당 첨부파일의 이미지 섬네일로 출력하기 */
+function setThumbnail(event, btnNo) {
+	
+	/* event에 해당되는 모든 첨부파일을 for-of문으로 반복 수행한다 */
+	for (var image of event.target.files) {
+		
+		/* Web Application이 비동기적으로 데이터를 읽기 위한 객체 생성 */
+		var reader = new FileReader(); 
+		
+		/* reader가 작동할 때 function 작동하여 img 태그 삽입 */
+		reader.onload = function(event) {
+			var img = document.createElement("img"); 
+			img.setAttribute("class", "img"+btnNo);
+			img.setAttribute("name", "img");
+			img.setAttribute("src", event.target.result);
+			img.setAttribute("style", "width: 270px; height: 170px; margin: 10px;");
+
+			document.querySelector("div#image_container").appendChild(img);
+		}; 
+		
+		reader.readAsDataURL(image); 
+	}
+}
 
 
 
@@ -241,6 +267,9 @@ function deleteInputBtn(btnNo){
 	
 	/* 첨부파일에 대한 모든 데이터 삭제를 위해 정보를 담고있는 div 태그 삭제 */
 	inputArea.remove();
+	
+	/* 해당 첨부파일의 섬네일 삭제 */
+	$(".img"+btnNo).remove();
 }
 
 

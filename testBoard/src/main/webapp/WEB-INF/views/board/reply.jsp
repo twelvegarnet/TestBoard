@@ -10,7 +10,7 @@
 	<c:if test="${orderNo eq 1}">
 		<div id="head" style="font-size: 20pt;">본문 - 답글 쓰기</div>
 	</c:if>
-	<c:if test="${groupNo eq 2}">
+	<c:if test="${groupNo gt 1}">
 		<div id="head" style="font-size: 20pt;">답글 - 답글 쓰기</div>
 	</c:if>
 	<hr>

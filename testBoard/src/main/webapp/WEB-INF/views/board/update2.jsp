@@ -37,12 +37,12 @@
 			<label id="nowStr"></label>/<label id="limitStr"></label>
 		</div><br>
 		<div id="fileUploadBtn">
-			<input type="file"  id="file1" name="file" accept=".gif, .jpg, .png, .jpeg" onchange="filechk(event);" />
+			<input type="button" value="+" onclick="plusInput()" style="margin-bottom: 10px;" />&nbsp;첨부파일 추가
 		</div>
 		<div id="deleteFileList"></div>
 		<br>
 		<label>※ 이미지 파일( .gif, .jpg, .png, .jpeg )만 업로드 가능합니다.</label><br>
-		<label>※ 이미지 업로드는 최대 3MB * 3 개까지 가능합니다.</label>
+		<label>※ 이미지 업로드는 최대 3MB * 15 개까지 가능합니다.</label>
 		<div id="image_container" style="text-align: left;">
 			<c:forEach var="f" items="${file }" varStatus="status" begin="0" step="1"><img src="/resources/${f.bfStoredName }" id="img${f.bfNo }" name="img" style="width: 260px; height: 170px; margin: 10px;"><input type="button" id="deleteBtn${f.bfNo }" onclick="deleteOldImg(${f.bfNo})" value="삭제" style="position: relative; top: -15px; left: -52px; cursor: pointer;"></c:forEach>
 		</div>
@@ -80,81 +80,163 @@ $("#nowStr").text(originLength);
 
 
 
-let fileCount = 1;
+/* 첨부파일에 필요한 데이터를 담기 위한 각 div와 내부 태그들의 id에 부여할 넘버링 */
+let fileupBtnNo = 1;
 
-function filechk(event){
+function plusInput(){
 	
-	console.log(fileCount);
+	/* 파일첨부 버튼, 파일첨부 삭제버튼을 담을 div 생성  */
+	const inputArea = document.createElement('div');
+	inputArea.setAttribute("id", "fileInputArea"+fileupBtnNo);
+	inputArea.setAttribute("class", "fileInputArea");
+
+	/* 다중파일첨부 input 버튼 */
+	const input = document.createElement('input');
+	input.setAttribute("type", "file");
+	input.setAttribute("multiple", "multiple");
+	input.setAttribute("id", "fileUploadBtn"+fileupBtnNo);
+	input.setAttribute("name", "file");
+	input.setAttribute("onchange", "chkUploadFile(event, "+fileupBtnNo+");");
+	input.setAttribute("accept", ".gif, .jpg, .png, .jpeg");
 	
-	/* 첨부파일이 이미지인지 체크 */
+	/* 해당 파일첨부 input 삭제버튼 */
+	const cancel = document.createElement("input");
+	cancel.setAttribute("type", "button");
+	cancel.setAttribute("id", "deleteBtn"+fileupBtnNo);
+	cancel.setAttribute("value", "X");
+	cancel.setAttribute("onclick", "deleteInputBtn("+fileupBtnNo+")");
+	
+	/* 해당 input의 첨부파일 개수를 관리할 input 생성 */
+	const eachFileCount = document.createElement("input");
+	eachFileCount.setAttribute("type", "hidden");
+	eachFileCount.setAttribute("id", "eachFileCount"+fileupBtnNo);
+	eachFileCount.setAttribute("value", "0");
+	
+	/* 첨부된 파일의 이름을 표시할 div 생성 */
+	const attachedFileName = document.createElement("div");
+	attachedFileName.setAttribute("id", "attachedFileName"+fileupBtnNo);
+	attachedFileName.setAttribute("style", "margin-left: 30px; display: inline-block;");
+	
+	/* plusInput()에서 생성된 inputArea를 담을 위치 */
+	const fileUpArea = document.querySelector("#fileUploadBtn");
+	
+	/* 생성된 div에 다중파일첨부 input 버튼과 input 삭제버튼 삽입 */
+	inputArea.append(input);
+	inputArea.append(cancel);
+	inputArea.append(attachedFileName);
+	inputArea.append(eachFileCount);
+	
+	/* 생성된 div를 기존의 div에 삽입 */
+	fileUpArea.append(inputArea);
+	
+	/* 다음에 생성되는 객체들과 차이를 두기 위해 넘버링값 +1 해주기 */
+	fileupBtnNo++;
+}
+
+
+
+
+
+/* 해당 작성글의 총 첨부파일 수 */
+let totalFileAmount = $("img[name=img]").length;
+
+/* 첨부파일 1개당 사이즈 제한 = 3MB */
+const fileLimitSize = 3145728;
+
+/* 첨부파일이 이미지 파일인지 체크 */
+function chkUploadFile(event, btnNo){
+	
+	/* -------------------------------- 검사 항목 ------------------------------- */
+	
+	/* 해당 첨부파일 버튼이 기존에 갖고있던 첨부파일의 수 */
+	const originFileCount = $("#eachFileCount"+btnNo).val();
+	
+	/* 현재 input type="file"에 담겨있는 첨부파일의 수 */
+	const nowFileCount = event.target.files.length;
+	
+	/* 현재 첨부한 파일과 기존에 첨부됐던 파일의 합이 15를 넘는다면  */
+	/* 현재 첨부한 파일을 reject한다 */
+	if(totalFileAmount-originFileCount+nowFileCount > 15){
+		alert("첨부파일은 최대 15개입니다.");
+		$("#fileUploadBtn"+btnNo).val("");
+		return false;
+	}
+
+	/* 첨부파일 타입에 'image'가 들어가는지 체크 */
 	const imgChk = /image/;
-	if(!imgChk.test(event.target.files[0].type)){
-		alert("이미지 파일만 첨부가능합니다.");
-		$("#file"+fileCount).val("");
-		return false;
-	}
-	
-	/* 첨부파일 용량 제한 */
-	const fileSize = event.target.files[0].size;
-	if(fileSize >= 3145728){
-		alert("1개당 3MB 이내의 파일만 첨부 가능합니다.");
-		$("#file"+fileCount).val("");
-		return false;
+
+	/* 모든 첨부파일의 파일 형식, 파일크기 체크 */
+	for(var image of event.target.files){
+		
+		/* n번째 첨부파일이 이미지인지 체크 */
+		if(!imgChk.test(image.type)){
+			alert("이미지 파일만 첨부가능합니다.");
+			$("#fileUploadBtn"+btnNo).val("");
+			return false;
+		}
+		
+		/* n번째 첨부파일의 크기가 제한 이내인지 체크 */
+		if(image.size > fileLimitSize){
+			alert("3MB 이내의 이미지 파일만 첨부 가능합니다.");
+			$("#fileUploadBtn"+btnNo).val("");
+			return false;
+		}
 	}
 
-	/* 첨부파일 개수 제한 */
-	const totalFileCount = $("img[name=img]").length;
+	/* ------------------------------------------------------------------------- */
 	
-	if(totalFileCount >= 3){
-		alert("이미지 파일은 3개까지 첨부 가능합니다.")
-		$("#file"+fileCount).val("");
-		return false;
+	
+	
+	/* -------------------------------- 실행 항목 ------------------------------- */
+	
+	/* 기존에 첨부했던 버튼에 재첨부 시 기존의 첨부파일이 있다면 차감시킨다 */
+	if(originFileCount != 0){
+	 	totalFileAmount -= originFileCount;
 	}
 	
-	event.target.setAttribute("style", "display: none;");
+	/* 첨부된 파일의 개수만큼 해당 input 버튼의 첨부파일 수 증가시키기 */
+	$("#eachFileCount"+btnNo).val(nowFileCount);
 	
-	const newFile = document.createElement("input");
-	newFile.setAttribute("type", "file");
-	newFile.setAttribute("id", "file"+(fileCount+1));
-	newFile.setAttribute("name", "file");
-	newFile.setAttribute("accept", ".gif, .jpg, .png, .jpeg");
-	newFile.setAttribute("onchange", "filechk(event);");
+	/* 첨부된 파일 개수만큼 총 첨부파일 수 증가시키기 */
+	totalFileAmount += nowFileCount;
 	
-	document.querySelector("#fileUploadBtn").appendChild(newFile);
+	/* 현재 첨부한 전체 첨부파일의 이름 표시하기 */
+	let attachedFileList = $("#attachedFileName"+btnNo).val();
 	
-	setThumbnail(event);
+	for(var image of event.target.files){
+		attachedFileList += ("   "+image.name+"    ,");
+	}
 	
-
+	/* 파일 이름 리스트 마지막의 "," 제거 */
+	
+		/* 파일 이름 리스트의 전체 길이 */
+		let attachedFileListLength = attachedFileList.length;
+		
+		/* 파일 이름 리스트의 마지막 글자 자르기 */
+		attachedFileList = attachedFileList.substring(0, attachedFileListLength-1);
+		
+	/* 파일 이름 리스트 화면에 출력 */
+	$("#attachedFileName"+btnNo).text(attachedFileList);
+	
+	/* ------------------------------------------------------------------------- */
 }
 
-function setThumbnail(event) {
-	
-	for (var image of event.target.files) {
-		
-		var reader = new FileReader(); 
-		
-		reader.onload = function(event) {
-			var img = document.createElement("img"); 
-			img.setAttribute("id", "img"+fileCount);
-			img.setAttribute("name", "img");
-			img.setAttribute("src", event.target.result);
-			img.setAttribute("style", "width: 270px; height: 170px; margin: 10px;");
-			var deleteBtn = document.createElement("input");
-			deleteBtn.setAttribute("id", "deleteBtn"+fileCount);
-			deleteBtn.setAttribute("type", "button");
-			deleteBtn.setAttribute("onclick", "deleteImg("+fileCount+");");
-			deleteBtn.setAttribute("value", "삭제");
-			deleteBtn.setAttribute("style", "position: relative; top: -15px; left: -53px; pointer: cursor;");
 
-			document.querySelector("div#image_container").appendChild(img);
-			document.querySelector("div#image_container").appendChild(deleteBtn);
-			
-			fileCount++;
-		}; 
-		
-		reader.readAsDataURL(image); 
-	}
+
+/* 버튼에 해당하는 첨부파일 삭제 */
+function deleteInputBtn(btnNo){
+	
+	/* 해당 버튼의 첨부파일 개수 얻기 */
+	const inputArea = document.getElementById("fileInputArea"+btnNo);
+	const inputBtn = inputArea.firstChild.files.length;
+
+	/* 총 첨부파일 개수에서 삭제하려는 파일의 개수 차감 */
+	totalFileAmount -= inputBtn;
+	
+	/* 첨부파일에 대한 모든 데이터 삭제를 위해 정보를 담고있는 div 태그 삭제 */
+	inputArea.remove();
 }
+
 
 
 function deleteOldImg(bfNo){
@@ -175,13 +257,16 @@ function deleteOldImg(bfNo){
 	oldFileCheckbox.setAttribute("checked", "checked");
 	
 	document.querySelector("#deleteFileList").appendChild(oldFileCheckbox);
+	
+	/* 기존의 첨부파일을 삭제시 총 첨부파일의 수가 차감된다 */
+	totalFileAmount -= 1;
 }
 
-function deleteImg(bfNo){
-	$("#img"+bfNo).remove();
-	$("#deleteBtn"+bfNo).remove();
-	$("#oldFile"+bfNo).remove();
-}
+
+
+
+
+
 
 function titleChk(){
 	let title = $("#boardTitle");
